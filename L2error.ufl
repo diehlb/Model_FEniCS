@@ -1,0 +1,11 @@
+# Calculate the square of the L2 norm given a true and calculated value
+#
+# Int( (u-u0)^2, dx)
+
+element = FiniteElement("Lagrange", "triangle", 1)
+
+u = Coefficient(element)
+u_true = Coefficient(element)
+
+err = u - u_true
+M   = err*err*dx

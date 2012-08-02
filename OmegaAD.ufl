@@ -1,0 +1,41 @@
+#OmegaAD.ufl 
+#  - Advection-diffusion equation for vorticity with coupling to temperature gradients
+#
+#  Solving a reduced system from a vorticity version of Boussinesq Primitive Equations
+#  This assumes constant velocity field and makes some big assumptions about scales.
+#
+#
+#  Initial Creation: 5Nov09
+#	12Nov10 - fully nondimensional version
+
+scalar = FiniteElement("Lagrange", "triangle", 1)
+
+v    = TestFunction(scalar)
+om1  = TrialFunction(scalar)    #vorticity
+
+# ---- Functions / Old time values ----
+om0  = Coefficient(scalar)	#vorticity at old time
+th1  = Coefficient(scalar)	#temperature at current time
+th0  = Coefficient(scalar)	#temperature at old time
+psi1 = Coefficient(scalar)	#streamfunction at current time
+psi0 = Coefficient(scalar)	#streamfunction at old time
+nbc  = Coefficient(scalar)
+
+# ---- Nondimensional Params ----
+Ar   = Constant(triangle)	#Aspect ratio
+Ar2  = Ar*Ar
+Ra   = Constant(triangle)	#Rayleigh Number
+r    = Constant(triangle)	#ratio of 
+
+# ---- Timestepping Parameters ----
+phi  = 0.5  			#Crank-Nicholson  
+k    = Constant(triangle) 	#Time stepping parameter
+
+#Forms
+a = v*om1*dx + phi*k*(v*psi1.dx(1)*om1.dx(0) -   v*psi1.dx(0)*om1.dx(1))*dx \
+	     + phi*k*Ar*(v.dx(0)*om1.dx(0)  + r/Ar2* v.dx(1)*om1.dx(1))*dx
+
+L = v*om0*dx - (1-phi)*k*(v*psi0.dx(1)*om0.dx(0) -   v*psi0.dx(0)*om0.dx(1))*dx \
+	     - (1-phi)*k*Ar*(v.dx(0)*om0.dx(0) + v.dx(1)*om0.dx(1)*r/Ar2)*dx \
+             - (1-phi)*k*v*Ra*th0.dx(0)*dx	 -      phi*k*v*Ra*th1.dx(0)*dx \
+	     + v*Ar*nbc*ds
